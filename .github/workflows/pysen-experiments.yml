@@ -27,7 +27,9 @@ jobs:
           version: "0.5.5"
 
       - name: Install dependencies
-        run: uv pip install -r experiments/requirements.txt --system
+        run: |
+          cd experiments
+          uv pip install -r requirements.txt --system
 
       - name: Run Pysen
         run: uv run pysen run lint

@@ -172,6 +172,7 @@ if st.button("検索"):
         lecture_name = lecture["metadata"]["lecture_name"]
         score = lecture["score"]
         distance = lecture["distance"]
+
         expanders.append(st.expander(f"**{lecture_name}** (スコア: {score}, 距離: {distance})"))
         for key, value in lecture["metadata"].items():
             expanders[-1].markdown(f"**{key}**")

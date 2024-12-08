@@ -1,0 +1,17 @@
+[project]
+name = "kulasis-ai-search-experiments"
+version = "0.1.0"
+
+[tool.pysen]
+version = "0.11"
+
+[tool.pysen.lint]
+enable_black = true
+enable_flake8 = true
+enable_isort = true
+enable_mypy = true
+mypy_preset = "strict"
+line_length = 119
+py_version = "PY311"
+[[tool.pysen.lint.mypy_targets]]
+  paths = ["."]

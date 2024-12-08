@@ -32,4 +32,6 @@ jobs:
           uv pip install -r requirements.txt --system
 
       - name: Run Pysen
-        run: uv run pysen run lint
+        run: |
+          cd experiments
+          uv run pysen run lint

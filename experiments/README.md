@@ -1,119 +1,114 @@
-## 開発方法
+## 環境構築方法
 
-処理のフローは以下のようになっています。
+### 使用環境
 
-1. preprocessing：テキストデータの前処理
-2. embedding：テキストデータのベクトル化
-3. search：候補シラバスの検索
-4. reranking：候補シラバスの順位付け
+|  | ツール | バージョン (括弧の場合は不問) |
+| --- | --- | --- |
+| 言語 | Python | 3.11.11 |
+| コンテナ化ツール | Docker | (27.3.1) |
+| パッケージ管理ツール | uv-pip | 0.5.5 |
+| ビルドツール | make | (3.81) |
+| ソースコード管理 | git | (2.39.5) |
 
-上記のフローを踏まえ、各ステップは「モジュール化」されており、以下のポイントに留意することで効率的かつ柔軟な開発が可能です。
+### セットアップ
 
-### モジュール構成
+1. 下記を参考にしてgit, docker, makeを使えるようにする（すでに使える人は飛ばす）
 
-`src/` ディレクトリ以下は、以下のような役割別ディレクトリ構成になっています。
+  - 使えるようになっているか確認する方法
+    - 以下のコマンドを実行して、バージョンが表示されればOK
 
-```
-src/
-├── preprocessing/   # 前処理ロジック（テキスト正規化、チャンキングなど）
-├── embedding/       # 埋め込み生成（ベクトル化）ロジック
-├── search/          # 検索エンジンや検索戦略（FAISS、ハイブリッド検索など）
-├── reranking/       # リランキング手法（LLMベース、類似度ベースなど）
-├── utils/           # 入出力、ログなどの補助的機能
-├── pipeline.py      # パイプラインを統合的に実行するスクリプト
-└── run_experiment.py # 実験（パイプライン実行）を管理するスクリプト
-```
+      ```
+      git --version
+      docker --version
+      make --version
+      ```
 
-このようなモジュール構成により、新たな前処理手法や埋め込みモデル、リランキングアルゴリズムを容易に追加・比較できます。
+  - **Windowsの人向け**
+    - git: https://prog-8.com/docs/git-env-win
+    - Docker: https://qiita.com/zembutsu/items/a98f6f25ef47c04893b3
+      - 「hello-world コンテナの実行」の手前まででOK
+    - make: https://redhologerbera.hatenablog.com/entry/2021/05/16/163305
 
-### コンフィグ駆動型アプローチ
+  - **Macの人向け**
+    - 以下のコマンドを実行するだけ。以上。
 
-`configs/` ディレクトリ下にある YAML ファイル（例：`configs/base_config.yaml`）により、各ステップで使用する手法やパラメータを統一的に管理できます。
+      ```
+      brew install git
+      brew install --cask docker
+      brew install make
+      ```
 
-```yaml
-# 例: configs/base_config.yaml
-data:
-  input_path: "data/processed/courses_processed.json"
-  output_path: "results/default_experiment/reranked_results.json"
+2. このリポジトリをクローンする
 
-preprocessing:
-  chunk_size: 512
-  normalization: true
+  ```
+  git clone https://github.com/kyoto-kaira/kulasis-ai-search.git
+  ```
+  
+3. 実験用ディレクトリに移動する
 
-embedding:
-  model: "text-embedding-ada-002"
-  api_key: "your_openai_api_key"
+  ```
+  cd kulasis-ai-search/experiments
+  ```
 
-search:
-  metadata_filter:
-    department: "工学部"
-    semester: "前期"
-  top_k: 10
+4. makeコマンドを実行して、Dockerイメージをビルドする
+  - (注) Docker Desktopを起動しておくこと。
 
-reranking:
-  method: "llm_reranker"
-  model: "gpt-4"
-  api_key: "your_openai_api_key"
+  ```
+  make build
+  ```
 
-query:
-  example_query: "Pythonでデータサイエンスを学びたい"
-```
+5. Dockerコンテナを起動する
 
-- **method切り替え**：`reranking.method` を `"llm_reranker"` から `"sim_reranker"` に変更するだけで、LLMを用いたリランキングから類似度ベースのリランキングへ切り替え可能です。
-- **パラメータ調整**：`chunk_size` や `top_k`、`metadata_filter`などのパラメータはコンフィグファイル側で容易に変更でき、コードを書き換えることなく異なる条件での実験を実施できます。
+  ```
+  make run
+  ```
 
-### 実験実行の流れ
+  - 以下のような表示が出ればOK
 
-1. **前処理 (preprocessing)**  
-   `src/preprocessing`内の`BasePreprocessor`を継承したクラス（例`SimplePreprocessor`）を利用し、テキストデータを正規化・トークン分割・チャンク化します。  
-   このステップでの出力は、後続の埋め込み生成で処理しやすい形に整えられたテキストチャンクのリストです。
+    ```
+    root@<コンテナID>:/app#
+    ```
+  
+6. 必要に応じて、APIキーを`.env`に設定する
+  - 記述例は`.env.example`を参照（このファイルは編集しないでください）
+  - 下記で`.env`ファイルの内容を読み込むことができます
+  
+    ```python
+    from dotenv import load_dotenv
+    load_dotenv()
+    ```
 
-2. **埋め込み (embedding)**  
-   `src/embedding`内の`BaseEmbedder`を実装したクラス（例：`OpenAIEmbedder`）により、テキストチャンクをベクトルに変換します。  
-   ベクトルはFAISSなどのインデックスに登録され、後続の検索で利用されます。
-
-3. **検索 (search)**  
-   `src/search`内の`BaseSearcher`を継承したクラス（例：`HybridSearcher`）を使用します。  
-   クエリを埋め込みベクトルに変換し、FAISSインデックスとメタデータフィルタリングを組み合わせて、適合しそうなシラバス候補を取得します。
-
-4. **リランキング (reranking)**  
-   `src/reranking`内の`BaseReranker`を継承したクラス（`LLMReranker`や`SimReranker`など）を用いて、取得した候補を再評価・再ソートします。  
-   - LLMベースのリランキング（`LLMReranker`）：LLMの評価能力を用いて関連度スコアを再計算し、結果を並べ替えます。  
-   - 類似度ベースのリランキング（`SimReranker`）：コサイン類似度などのメトリクスを用いて、クエリと結果の関連度を計算・並べ替えます。
-
-### 切り替え・新手法の追加
-
-- **手法切り替え**：  
-  `configs/*.yaml` の `reranking.method` を変更することで簡単にリランキング手法を切り替えられます。  
-  他のステップ（例えば埋め込みモデル）の切り替えも同様にコンフィグファイル編集のみで対応可能です。
-
-- **新手法の追加**：  
-  新しい前処理クラス、埋め込み手法、検索アルゴリズム、リランキング手法を追加したい場合は、
-  `src/` 以下の該当ディレクトリに `BaseClass` を継承した新しいクラスを作成し、`__init__.py`でエクスポートしてください。  
-  その後、コンフィグファイルの対応するパラメータを更新することで、新規手法をすぐに実験へ組み込めます。
-
-### 実験の実行例
-
-```bash
-# 基本的な実験実行
-python src/run_experiment.py configs/base_config.yaml default_experiment
-```
-
-```bash
-# sim_reranker を使用した実験実行
-python src/run_experiment.py configs/sim_reranker_config.yaml sim_reranker_experiment
-```
-
-実験結果（リランキング後のJSONなど）は `results/<experiment_id>/` 以下に保存されます。  
-`config_used.yaml` と `reranked_results.json` を併せて管理することで、後から条件別の結果比較が容易になります。
-
-
-
-## ライブラリを追加する場合
+### ライブラリを追加する場合
 
 1. `requirements.txt` に追加したいライブラリを追記する
 2. 以下のコマンドを実行する
 
-```bash
-uv pip install -r requirements.txt --system
+  ```
+  uv pip install -r requirements.txt --system
+  ```
+
+## 開発の進め方
+
+- Notionページ「[【マニュアル】開発の進め方](https://www.notion.so/kyoto-kaira/156c86ea531e803c8ecde278392df13c?pvs=4)」を参照してください。
+
+
+## 実験の実行例
+
+### コマンド上で実行する場合
+
+- 複数クエリに対して実験を行いたい場合
+- wandbに実験を記録したい場合
+
 ```
+python src/run_experiment.py configs/base_config.yaml default_experiment
+```
+
+### Streamlitで実行する場合
+
+- アプリケーション上で実験を行いたい場合
+
+```
+streamlit run app.py
+```
+
+

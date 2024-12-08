@@ -5,12 +5,32 @@ import shutil
 import sys
 import uuid
 from datetime import datetime
+from typing import Any, Dict
 
 import weave
 import yaml
 from loguru import logger
 from src.pipeline import main
 from src.utils import load_json
+from weave import Model
+
+
+class WeaveModel(Model):  # type: ignore
+    config: Dict[str, Any]
+    results: Dict[str, Any]
+
+    @weave.op()
+    def push(self, query: str) -> str:
+        """weaveにデータを送信する用の関数。"""
+        result_msg = "| 講義名 | distance | score |\n| --- | --- | --- |\n"
+        for result in self.results["results"]:
+            lecture_name = result["metadata"]["lecture_name"]
+            url = result["metadata"]["url"]
+            distance = result["distance"]
+            score = result["score"]
+            result_msg += f"| [{lecture_name}]({url}) | {distance} | {score} |\n"
+
+        return result_msg
 
 
 def run_experiment(config_path: str, experiment_name: str = "default_experiment") -> None:
@@ -45,24 +65,12 @@ def run_experiment(config_path: str, experiment_name: str = "default_experiment"
     main(config)
 
     # weaveへの記録
-    @weave.op()
-    def push_to_weave(query: str) -> str:
-        """weaveにデータを送信する用の関数。"""
-        result_msg = "| 講義名 | distance | score |\n| --- | --- | --- |\n"
-        for result in results["results"]:
-            lecture_name = result["metadata"]["lecture_name"]
-            url = result["metadata"]["url"]
-            distance = result["distance"]
-            score = result["score"]
-            result_msg += f"| [{lecture_name}]({url}) | {distance} | {score} |\n"
-
-        return result_msg
-
     weave.init(config["wandb"]["project"])
     results_list = load_json(config["data"]["output_path"])
     for results in results_list:
         query = results["query"]
-        push_to_weave(query=query)
+        model = WeaveModel(config=config, results=results)
+        model.push(query=query)
 
     logger.info(f"Experiment '{experiment_id}' completed successfully.")
 

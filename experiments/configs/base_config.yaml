@@ -1,7 +1,7 @@
 # configs/base_config.yaml
 
 wandb:
-  project: "kulasis-ai-search"
+  project: "matsuda_tkm/kulasis-ai-search"
 
 data:
   input_dir: "data/raw"

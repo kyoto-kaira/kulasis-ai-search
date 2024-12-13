@@ -1,12 +1,12 @@
 # src/embedding/e5_embedder.py
 
-from tqdm import tqdm
 from typing import List
 
 import numpy as np
 import torch
-from transformers import AutoModel, AutoTokenizer
 from loguru import logger
+from tqdm import tqdm
+from transformers import AutoModel, AutoTokenizer
 
 from .base import BaseEmbedder
 

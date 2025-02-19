@@ -33,7 +33,7 @@ class WeaveModel(Model):  # type: ignore
         return result_msg
 
 
-def run_evaluation(csv_path: str, config_path:str,experiment_name: str = "default_experiment") -> None:
+def run_evaluation(csv_path: str, config_path: str, experiment_name: str = "default_experiment") -> None:
     """
     実験を実行し、結果を保存する関数。
 
@@ -56,7 +56,7 @@ def run_evaluation(csv_path: str, config_path:str,experiment_name: str = "defaul
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
     logger.info("Loaded config file")
-    eval_data=pd.read_csv(csv_path)
+    eval_data = pd.read_csv(csv_path)
     logger.info("Loaded csv file")
 
     # 設定ファイルのコピーを保存
@@ -65,7 +65,7 @@ def run_evaluation(csv_path: str, config_path:str,experiment_name: str = "defaul
 
     # パイプラインの実行
     config["data"]["output_path"] = os.path.join(results_dir, "reranked_results.json")
-    config["queries"]=eval_data["query"].tolist()
+    config["queries"] = eval_data["query"].tolist()
     main(config)
 
     # weaveへの記録
@@ -88,4 +88,4 @@ if __name__ == "__main__":
     config_path = sys.argv[2]
     experiment_name = sys.argv[3] if len(sys.argv) > 3 else "default_experiment"
     
-    run_evaluation(csv_path,config_path, experiment_name)
+    run_evaluation(csv_path, config_path, experiment_name)

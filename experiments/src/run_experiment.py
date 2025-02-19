@@ -69,7 +69,7 @@ def run_experiment(config_path: str, experiment_name: str = "default_experiment"
     results_list = load_json(config["data"]["output_path"])
     for results in results_list:
         query = results["query"]
-        model = WeaveModel(config=config, results=results)
+        model = WeaveModel(config=config, results=results, ref=None)
         model.push(query=query)
 
     logger.info(f"Experiment '{experiment_id}' completed successfully.")

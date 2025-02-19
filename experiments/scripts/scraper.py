@@ -8,6 +8,7 @@ import aiofiles
 import aiohttp
 import requests
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 from src.constants import DEPARTMENTS
 
 from .common import get_lecture_no
@@ -31,20 +32,20 @@ def scrape_lecture_urls() -> None:
         if department_name[:-1] in DEPARTMENTS:
             parent_div = dept.find_parent()
 
-            if not parent_div:
+            if not isinstance(parent_div, Tag):
                 continue
 
             department_section = parent_div.find("div", class_="departmentSection")
-            if not department_section:
+            if not isinstance(department_section, Tag):
                 continue
 
             syllabus_titles = department_section.find_all("div", class_="syllabusTitle")
 
             for syllabus in syllabus_titles:
-                a_tag = syllabus.find("a")
-                if a_tag and "href" in a_tag.attrs:
-                    href = a_tag["href"]
-                    lecture_name = a_tag.get_text(strip=True)
+                a_tag = syllabus.find("a")  # type: ignore
+                if a_tag and "href" in a_tag.attrs:  # type: ignore
+                    href = a_tag["href"]  # type: ignore
+                    lecture_name = a_tag.get_text(strip=True)  # type: ignore
                     # lecture_noを取得する際に、完全なURLを使用
                     full_url = BASE_URL + href
                     lecture_no = get_lecture_no(full_url)

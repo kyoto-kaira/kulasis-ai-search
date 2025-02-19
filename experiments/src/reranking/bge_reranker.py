@@ -89,4 +89,4 @@ class BgeReranker(BaseReranker):
         q_embeddings = self.model.encode([query], normalize_embeddings=True)
         p_embeddings = self.model.encode(documents, normalize_embeddings=True)
         rerank_scores = q_embeddings @ p_embeddings.T
-        return rerank_scores[0].tolist()
+        return list(map(float, rerank_scores[0].tolist()))

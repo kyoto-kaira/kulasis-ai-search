@@ -1,6 +1,7 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 
 class SyllabusParser:
@@ -20,7 +21,7 @@ class SyllabusParser:
                 # subheadingの次のdivもしくは同列の内容を取得する
                 # 基本的には次のsiblingや同じセル内の次のテキストノードをたどる
                 parent_td = sub.find_parent("td", class_="lesson_plan_sell")
-                if not parent_td:
+                if not parent_td or not sub.parent:
                     # 見つからない場合は次の兄弟要素など別の方法で探す必要あり
                     continue
                 # subheading自体の次にあるテキストを取得
@@ -28,8 +29,8 @@ class SyllabusParser:
                 texts = []
                 for elem in sub.parent.find_all(string=True, recursive=False):
                     # sub itselfのテキストは除外
-                    if sub.get_text(strip=True) not in elem.strip():
-                        if elem.strip():
+                    if isinstance(elem, str) and sub.get_text(strip=True) not in elem.strip():
+                        if elem.strip() and isinstance(elem, str):
                             texts.append(elem.strip())
 
                 # もし上記で取れなければ子要素(divなど)も走査
@@ -56,7 +57,7 @@ class SyllabusParser:
         if numbering_td:
             # numbering_tdの親要素tableから、対応する次のtdを取得
             numbering_parent = numbering_td.find_parent("table")
-            if numbering_parent:
+            if isinstance(numbering_parent, Tag):
                 # 実際の科目ナンバリングテキストは (科目ナンバリング) の行のすぐ下にある
                 # <td nowrap>U-ECON00 10102 LJ43</td> のような箇所
                 text_nodes = numbering_parent.find_all("td")
@@ -70,7 +71,7 @@ class SyllabusParser:
         eng_td = self.soup.find("span", class_="lesson_plan_subheading", string=lambda x: x and "(英 訳)" in x)
         if eng_td:
             eng_parent = eng_td.find_parent("table")
-            if eng_parent:
+            if isinstance(eng_parent, Tag):
                 # 英訳は(英 訳)行の次のtdにあると想定
                 # tdを全取得し、(英 訳)があったらその次のtdを取る
                 tds = eng_parent.find_all("td")
@@ -96,16 +97,18 @@ class SyllabusParser:
             if subheading:
                 teacher_info_table = subheading.find_parent("table")
 
-        if teacher_info_table:
+        if isinstance(teacher_info_table, Tag):
             # このテーブル内には (所属部局), (職 名), (氏 名) のヘッダと値が並んでいる
             # 次の行に実データあり
             rows = teacher_info_table.find_all("tr")
+
             # ヘッダ行を見つけ、その下の行を値として取得する
             for i, row in enumerate(rows):
                 if "(所属部局)" in row.get_text():
                     # 次の行にデータがあるはず
-                    if i + 1 < len(rows):
-                        data_row = rows[i + 1].find_all("td")
+                    next_row = rows[i + 1]
+                    if i + 1 < len(rows) and isinstance(next_row, Tag):
+                        data_row = next_row.find_all("td")
                         # data_rowは[所属部局, 職名, 氏名]の順
                         if len(data_row) >= 3:
                             result["所属部局"] = data_row[0].get_text(strip=True)
@@ -119,7 +122,7 @@ class SyllabusParser:
         year_td = self.soup.find("span", class_="lesson_plan_subheading", string=lambda x: x and "(配当学年)" in x)
         if year_td:
             parent_table = year_td.find_parent("table")
-            if parent_table:
+            if isinstance(parent_table, Tag):
                 tds = parent_table.find_all("td")
                 # 順番的に (配当学年) -> 1,2回生 -> (単位数) -> 2単位 -> (開講年度・開講期) -> 2024・前期
                 # を想定
@@ -143,7 +146,7 @@ class SyllabusParser:
         day_time_td = self.soup.find("span", class_="lesson_plan_subheading", string=lambda x: x and "(曜時限)" in x)
         if day_time_td:
             parent_table = day_time_td.find_parent("table")
-            if parent_table:
+            if isinstance(parent_table, Tag):
                 tds = parent_table.find_all("td")
                 texts = [td.get_text(strip=True) for td in tds]
                 # 想定: ["(曜時限)", "水2", "(授業形態)", "講義"]
@@ -160,7 +163,7 @@ class SyllabusParser:
         lang_td = self.soup.find("span", class_="lesson_plan_subheading", string=lambda x: x and "(使用言語)" in x)
         if lang_td:
             parent_table = lang_td.find_parent("table")
-            if parent_table:
+            if isinstance(parent_table, Tag):
                 tds = parent_table.find_all("td")
                 # 想定: ["(使用言語)", "日本語"]
                 for i, td in enumerate(tds):

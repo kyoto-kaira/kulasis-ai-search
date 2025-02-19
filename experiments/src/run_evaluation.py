@@ -6,6 +6,7 @@ import sys
 import uuid
 from datetime import datetime
 from typing import Any, Dict
+
 import pandas as pd
 import weave
 import yaml
@@ -87,5 +88,5 @@ if __name__ == "__main__":
     csv_path = sys.argv[1]
     config_path = sys.argv[2]
     experiment_name = sys.argv[3] if len(sys.argv) > 3 else "default_experiment"
-    
+
     run_evaluation(csv_path, config_path, experiment_name)

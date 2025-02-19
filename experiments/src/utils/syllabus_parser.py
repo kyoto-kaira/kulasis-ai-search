@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag

@@ -1,5 +1,5 @@
 pysen
-isort
+isort<6
 mypy
 black
 flake8
@@ -19,4 +19,4 @@ python-dotenv
 torch
 transformers
 weave
-cohere
+sentence-transformers

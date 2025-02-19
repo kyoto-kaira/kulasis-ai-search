@@ -1,7 +1,7 @@
 # src/reranking/__init__.py
 
 from .base import BaseReranker
+from .bge_reranker import BgeReranker
 from .gemini_reranker import GeminiReranker
-from .cohere_reranker import CohereReranker
 
-__all__ = ["BaseReranker", "GeminiReranker", "CohereReranker"]
+__all__ = ["BaseReranker", "GeminiReranker", "BgeReranker"]

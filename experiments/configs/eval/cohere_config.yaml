@@ -1,4 +1,4 @@
-# configs/cohere_config.yaml
+# configs/eval/cohere_config.yaml
 
 wandb:
   project: "matsuda_tkm/kulasis-ai-search"
@@ -23,12 +23,8 @@ embedding:
 search:
   method: "simple"
   metadata_filter:
-    department: "文学部"
-    section: "日本語授業"
   top_k: 10
 
 reranking:
   method: "cohere"
   model: "rerank-multilingual-v3.0"
-
-queries: ["ヘブライ語"]

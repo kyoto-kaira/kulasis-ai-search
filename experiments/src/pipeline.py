@@ -8,7 +8,7 @@ import numpy as np
 from loguru import logger
 from src.embedding import GeminiEmbedder
 from src.preprocessing import SimplePreprocessor
-from src.reranking import GeminiReranker
+from src.reranking import GeminiReranker,CohereReranker
 from src.search import SimpleSearcher
 from src.utils import load_htmls_under_dir, load_json, save_json
 
@@ -113,6 +113,8 @@ def pipeline_search(config: Dict, index: faiss.Index, processed_data: list) -> L
     # リランキングシステムの初期化
     if config["reranking"]["method"] == "gemini":
         reranker = GeminiReranker(model=config["reranking"]["model"])
+    elif config["reranking"]["method"] == "cohere":
+        reranker = CohereReranker(model=config["reranking"]["model"])
     logger.info("Initialized Reranker")
 
     # 検索クエリの例

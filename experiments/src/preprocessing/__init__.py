@@ -2,5 +2,5 @@
 
 from .base import BasePreprocessor
 from .simple_preprocessor import SimplePreprocessor
-
-__all__ = ["BasePreprocessor", "SimplePreprocessor"]
+from .simple_selected_preprocessor import SimpleSelectedPreprocessor
+__all__ = ["BasePreprocessor", "SimplePreprocessor","SimpleSelectedPreprocessor"]

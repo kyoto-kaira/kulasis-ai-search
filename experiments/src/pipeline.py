@@ -7,7 +7,7 @@ import faiss
 import numpy as np
 from loguru import logger
 from src.embedding import GeminiEmbedder
-from src.preprocessing import SimplePreprocessor
+from src.preprocessing import SimplePreprocessor,SimpleSelectedPreprocessor
 from src.reranking import GeminiReranker
 from src.search import SimpleSearcher
 from src.utils import load_htmls_under_dir, load_json, save_json
@@ -68,6 +68,11 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict]]:
                 chunk_size=config["preprocessing"]["chunk_size"],
                 normalization=config["preprocessing"]["normalization"],
             )
+        if config["preprocessing"]["method"] == "simple_selected":
+            preprocessor = SimpleSelectedPreprocessor(
+                chunk_size=config["preprocessing"]["chunk_size"],
+                normalization=config["preprocessing"]["normalization"],
+            )        
         processed_data = preprocessor.run(raw_data)
         logger.info(f"Processed data into {len(processed_data)} chunks")
 

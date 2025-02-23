@@ -7,7 +7,7 @@ data:
   input_dir: "data/raw"
 
 index:
-  index_dir: "data/index"
+  index_dir: "data/index_selected"
   embedding_name: "faiss_index.bin"
   processed_data_name: "processed_data.json"
 

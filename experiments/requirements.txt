@@ -18,5 +18,5 @@ faiss-cpu
 python-dotenv
 torch
 transformers
-weave
+weave>=0.51.34
 sentence-transformers

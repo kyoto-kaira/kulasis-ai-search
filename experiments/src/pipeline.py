@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 import faiss
 import numpy as np
 from loguru import logger
-from src.embedding import GeminiEmbedder
+from src.embedding import BaseEmbedder, E5Embedder, GeminiEmbedder
 from src.preprocessing import SimplePreprocessor
 from src.reranking import GeminiReranker
 from src.search import SimpleSearcher
@@ -82,8 +82,11 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict]]:
         logger.info(f"Loaded FAISS index from {embedding_path}")
     else:
         # 埋め込み生成
+        embedder: BaseEmbedder
         if config["embedding"]["method"] == "gemini":
             embedder = GeminiEmbedder(model=config["embedding"]["model"])
+        elif config["embedding"]["method"] == "e5":
+            embedder = E5Embedder(model=config["embedding"]["model"], batch_size=config["embedding"]["batch_size"])
         texts = [entry["text_chunk"] for entry in processed_data]
         embeddings = embedder.embed_passage(texts)
         logger.info(f"Generated embeddings with shape {embeddings.shape}")
@@ -116,8 +119,11 @@ def pipeline_search(config: Dict, index: faiss.Index, processed_data: list) -> L
     logger.info("Initialized Reranker")
 
     # 検索クエリの例
+    embedder: BaseEmbedder
     if config["embedding"]["method"] == "gemini":
         embedder = GeminiEmbedder(model=config["embedding"]["model"])
+    elif config["embedding"]["method"] == "e5":
+        embedder = E5Embedder(model=config["embedding"]["model"], batch_size=config["embedding"]["batch_size"])
     queries = config["queries"]
     query_vector = embedder.embed_query(queries)
     logger.info("Encoded query")

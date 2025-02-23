@@ -8,7 +8,7 @@ import numpy as np
 from loguru import logger
 from src.embedding import BaseEmbedder, E5Embedder, GeminiEmbedder
 from src.preprocessing import SimplePreprocessor
-from src.reranking import GeminiReranker
+from src.reranking import BaseReranker, BgeReranker, GeminiReranker
 from src.search import SimpleSearcher
 from src.utils import load_htmls_under_dir, load_json, save_json
 
@@ -114,8 +114,11 @@ def pipeline_search(config: Dict, index: faiss.Index, processed_data: list) -> L
     logger.info("Initialized Searcher")
 
     # リランキングシステムの初期化
+    reranker: BaseReranker
     if config["reranking"]["method"] == "gemini":
         reranker = GeminiReranker(model=config["reranking"]["model"])
+    elif config["reranking"]["method"] == "bge":
+        reranker = BgeReranker(model=config["reranking"]["model"])
     logger.info("Initialized Reranker")
 
     # 検索クエリの例

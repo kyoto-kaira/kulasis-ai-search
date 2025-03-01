@@ -1,5 +1,5 @@
 pysen
-isort
+isort<6
 mypy
 black
 flake8
@@ -18,4 +18,5 @@ faiss-cpu
 python-dotenv
 torch
 transformers
-weave
+weave>=0.51.34
+sentence-transformers

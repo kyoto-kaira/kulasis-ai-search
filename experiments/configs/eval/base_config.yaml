@@ -1,0 +1,31 @@
+# configs/eval/base_config.yaml
+
+wandb:
+  project: "matsuda_tkm/kulasis-ai-search"
+
+data:
+  input_dir: "data/raw"
+
+index:
+  index_dir: "data/index"
+  embedding_name: "faiss_index.bin"
+  processed_data_name: "processed_data.json"
+
+preprocessing:
+  method: "simple"
+  chunk_size: 2048
+  normalization: true
+
+embedding:
+  method: "gemini"
+  model: "models/text-embedding-004"
+
+search:
+  method: "simple"
+  metadata_filter:
+  top_k: 10
+
+reranking:
+  method: "gemini"
+  model: "gemini-1.5-flash"
+

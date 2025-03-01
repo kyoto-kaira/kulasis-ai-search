@@ -87,7 +87,7 @@ class GeminiReranker(BaseReranker):
             prompt += f"{idx}. 講義名: {lecture_name}\n   説明: {description}\n\n"
         prompt += (
             f"上記の講義について、ユーザーのクエリ '{query}' に対する関連度スコアを1から10で評価してください。\n"
-            "関連度スコア(1~10)を以下のJSON形式で返してください。\n['scores': [score, ...]}"
+            "関連度スコア(1~10)を以下のJSON形式(Dict[str, List[int]])で返してください。\n{'scores': [score, ...]}"
         )
         return prompt
 

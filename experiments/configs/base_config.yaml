@@ -12,23 +12,24 @@ index:
   processed_data_name: "processed_data.json"
 
 preprocessing:
-  method: "simple"
-  chunk_size: 2048
+  method: "simple_selected"
+  chunk_size: 512
   normalization: true
+  summarize: true
 
 embedding:
-  method: "gemini"
-  model: "models/text-embedding-004"
+  method: "e5"
+  model: "intfloat/multilingual-e5-small"
+  batch_size: 32
 
 search:
   method: "simple"
   metadata_filter:
-    department: "文学部"
-    section: "日本語授業"
+    department: "法学部"
   top_k: 10
 
 reranking:
   method: "gemini"
-  model: "gemini-1.5-flash"
+  model: "gemini-2.0-flash-exp"
 
-queries: ["ヘブライ語"]
+queries: ["日本の法律の歴史について学びたい"]

@@ -1,4 +1,4 @@
-# src/run_experiment.py
+# src/run_evaluation.py
 
 import os
 import shutil
@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict
 
+import pandas as pd
 import weave
 import yaml
 from loguru import logger
@@ -33,13 +34,13 @@ class WeaveModel(Model):  # type: ignore
         return result_msg
 
 
-def run_experiment(config_path: str, experiment_name: str = "default_experiment") -> None:
+def run_evaluation(csv_path: str, config_path: str, experiment_name: str = "default_experiment") -> None:
     """
     実験を実行し、結果を保存する関数。
 
     Parameters
     ----------
-    config_path : str
+    csv_path : str
         使用する設定ファイルのパス
     experiment_name : str, optional
         実験名, by default "default_experiment"
@@ -48,13 +49,16 @@ def run_experiment(config_path: str, experiment_name: str = "default_experiment"
 
     # 実験IDの生成
     experiment_id = f"{experiment_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
-    results_dir = os.path.join("results", experiment_id)
+    results_dir = os.path.join("results/eval", experiment_id)
     os.makedirs(results_dir, exist_ok=True)
     logger.info(f"Results will be saved to '{results_dir}'")
 
     # 設定ファイルのロード
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
+    logger.info("Loaded config file")
+    eval_data = pd.read_csv(csv_path)
+    logger.info("Loaded csv file")
 
     # 設定ファイルのコピーを保存
     shutil.copy(config_path, os.path.join(results_dir, "config_used.yaml"))
@@ -62,6 +66,7 @@ def run_experiment(config_path: str, experiment_name: str = "default_experiment"
 
     # パイプラインの実行
     config["data"]["output_path"] = os.path.join(results_dir, "reranked_results.json")
+    config["queries"] = eval_data["query"].tolist()
     main(config)
 
     # weaveへの記録
@@ -76,11 +81,12 @@ def run_experiment(config_path: str, experiment_name: str = "default_experiment"
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python run_experiment.py <config_path> [experiment_name]")
+    if len(sys.argv) < 3:
+        print("Usage: python run_evaluation.py <csv_path> [experiment_name]")
         sys.exit(1)
 
-    config_path = sys.argv[1]
-    experiment_name = sys.argv[2] if len(sys.argv) > 2 else "default_experiment"
+    csv_path = sys.argv[1]
+    config_path = sys.argv[2]
+    experiment_name = sys.argv[3] if len(sys.argv) > 3 else "default_experiment"
 
-    run_experiment(config_path, experiment_name)
+    run_evaluation(csv_path, config_path, experiment_name)

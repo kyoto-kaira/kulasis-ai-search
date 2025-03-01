@@ -29,6 +29,15 @@
       - 「hello-world コンテナの実行」の手前まででOK
     - make: https://redhologerbera.hatenablog.com/entry/2021/05/16/163305
 
+  - **Windowsの人向け（WSL2を使う場合）**
+    - 以下のコマンドを実行するだけ。以上。
+      ```
+      sudo apt update
+      sudo apt install git
+      sudo apt install docker.io
+      sudo apt install make
+      ```
+
   - **Macの人向け**
     - 以下のコマンドを実行するだけ。以上。
 
@@ -37,6 +46,7 @@
       brew install --cask docker
       brew install make
       ```
+    - ※Gitの設定は https://prog-8.com/docs/git-env を参考にしてください
 
 2. このリポジトリをクローンする
 

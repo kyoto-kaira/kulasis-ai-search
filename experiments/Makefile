@@ -8,7 +8,7 @@ build:
 	docker build -t $(IMAGE_NAME) .
 
 run:
-	docker run -it --rm -v C:\new\kulasis-ai-search\experiments/app -p $(PORT):$(PORT) --name $(CONTAINER_NAME) $(IMAGE_NAME) bash
+	docker run -it --rm -v ${PWD}:/app -p $(PORT):$(PORT) --name $(CONTAINER_NAME) $(IMAGE_NAME) bash
 
 unzip:
 	unzip -d data/ data/raw.zip

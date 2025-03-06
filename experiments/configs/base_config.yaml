@@ -15,7 +15,6 @@ preprocessing:
   method: "simple_selected"
   chunk_size: 512
   normalization: true
-  summarize: true
 
 embedding:
   method: "e5"
@@ -31,5 +30,14 @@ search:
 reranking:
   method: "gemini"
   model: "gemini-2.0-flash-exp"
+
+summarize:
+  summary_output: True
+  model: "gpt-3.5-turbo-0125"
+  summarize_dir: "data/summary"
+  prompt_name1: "summary_prompt1.json"
+  prompt_name2: "summary_prompt2.json"
+  summary_name1: "summary_data1.json"
+  summary_name2: "summary_data2.json"
 
 queries: ["日本の法律の歴史について学びたい"]

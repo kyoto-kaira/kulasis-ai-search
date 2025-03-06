@@ -78,14 +78,16 @@ def run_search(
             "embedding_name": "faiss_index.bin",
             "processed_data_name": "processed_data.json",
         },
-        "preprocessing": {"method": "simple", "chunk_size": 2048, "normalization": True},
-        "embedding": {"method": "gemini", "model": "models/text-embedding-004"},
+        "preprocessing": {"method": "simple_selected", "chunk_size": 2048, "normalization": True},
+        "embedding": {"method": "e5", "model": "intfloat/multilingual-e5-small", "batch_size": 32},
         "search": {
             "method": "simple",
             "metadata_filter": {},
             "top_k": 10,
         },
         "reranking": {"method": "gemini", "model": "gemini-1.5-flash"},
+        "summarize": {"summary_output": True, "model": "gpt-3.5-turbo-0125", "summarize_dir": "data/summary", "prompt_name1": "summary_prompt1.json", "prompt_name2": "summary_prompt2.json", "summary_name1": "summary_data1.json", "summary_name2": "summary_data2.json"},
+
         "queries": None,
     }
 

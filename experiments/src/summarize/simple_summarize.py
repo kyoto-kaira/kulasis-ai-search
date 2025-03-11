@@ -145,6 +145,7 @@ class SimpleSummarizer(BaseSummarizer):
         while batch_job.status != "completed":
             time.sleep(10)
             batch_job = self.client.batches.retrieve(batch_job.id)
+            print(batch_job.status)
             if batch_job.status == "failed":
                 raise ValueError("Input file is too large or its format is wrong")
 

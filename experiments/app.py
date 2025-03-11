@@ -86,7 +86,7 @@ def run_search(
             "top_k": 10,
         },
         "reranking": {"method": "gemini", "model": "gemini-1.5-flash"},
-        "summarize": {"summary_output": True, "model": "gpt-3.5-turbo-0125", "summarize_dir": "data/summary", "prompt_name1": "summary_prompt1.json", "prompt_name2": "summary_prompt2.json", "summary_name1": "summary_data1.json", "summary_name2": "summary_data2.json"},
+        "summarize": {"summary_output": True, "model": "gpt-4o-mini", "summarize_dir": "data/summary", "summary_name": "summary_data.json"},
 
         "queries": None,
     }

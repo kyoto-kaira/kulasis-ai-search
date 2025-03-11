@@ -56,10 +56,7 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict], List[str]]
     embedding_path = os.path.join(index_dir, config["index"]["embedding_name"])
     processed_data_path = os.path.join(index_dir, config["index"]["processed_data_name"])
     summarize_dir = config["summarize"]["summarize_dir"]
-    summary_prompt1_path = os.path.join(summarize_dir, config["summarize"]["prompt_name1"])
-    summary_prompt2_path = os.path.join(summarize_dir, config["summarize"]["prompt_name2"])
-    summary_data1_path = os.path.join(summarize_dir, config["summarize"]["summary_name1"])
-    summary_data2_path = os.path.join(summarize_dir, config["summarize"]["summary_name2"])
+    summary_data_path = os.path.join(summarize_dir, config["summarize"]["summary_name"])
     
     # すでに同名の前処理済みデータが存在する場合はそれをロード
     if os.path.exists(processed_data_path):
@@ -114,63 +111,31 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict], List[str]]
         logger.info(f"Saved FAISS index to {embedding_path}")
 
     # すでに同名の要約したデータが存在する場合はそれをロード
-    if os.path.exists(summary_data1_path):
-        summary_data1 = load_json(summary_data1_path)
-        logger.info(f"Loaded processed data from {summary_data1_path}")
+    if os.path.exists(summary_data_path):
+        summary_data = load_json(summary_data_path)
+        logger.info(f"Loaded summary data from {summary_data_path}")
     else:
         summarizer = SimpleSummarizer(
             model=config["summarize"]["model"],
         )
-        # プロンプトの作成
-        if not os.path.exists(summary_prompt1_path):
-            # データロード
-            raw_data = load_htmls_under_dir(config["data"]["input_dir"])
-            logger.info(f"Loaded {len(raw_data)} records from {config['data']['input_dir']}")
-            prompt_data1 = summarizer.batch_json_data(raw_data)[:3500]
+        raw_data = load_htmls_under_dir(config["data"]["input_dir"])
+        logger.info(f"Loaded {len(raw_data)} records from {config['data']['input_dir']}")
+        sammary_data = []
+        for i in range(0,len(raw_data),3000):
+            prompt_data_path = os.path.join(summarize_dir, f"summary_prompt{i//3000+1}.json")
+            if not os.path.exists(prompt_data_path):
+                # プロンプトデータ保存
+                prompt_data = summarizer.batch_json_data(raw_data[i:i+3000])
+                os.makedirs(os.path.dirname(prompt_data_path), exist_ok=True)
+                save_list_json(prompt_data, prompt_data_path)
+                logger.info(f"Saved prompt data to {prompt_data_path}")
 
-            # プロンプトデータ保存
-            os.makedirs(os.path.dirname(summary_prompt1_path), exist_ok=True)
-            save_list_json(prompt_data1, summary_prompt1_path)
-            logger.info(f"Saved processed data to {summary_prompt1_path}")
-        
-        summary_data1 = summarizer.summarize(summary_prompt1_path)
-        logger.info(f"Loaded processed data from {summary_prompt1_path}")
+            # 要約データ保存
+            sammary_data.extend(summarizer.summarize(prompt_data_path))
+        os.makedirs(os.path.dirname(summary_data_path), exist_ok=True)
+        save_json(sammary_data, summary_data_path)
+        logger.info(f"Saved summary data to {summary_data_path}")
 
-        # プロンプトデータ保存
-        os.makedirs(os.path.dirname(summary_data1_path), exist_ok=True)
-        save_json(summary_data1, summary_data1_path)
-        logger.info(f"Saved processed data to {summary_data1_path}")
-
-    # すでに同名の要約したデータが存在する場合はそれをロード
-    if os.path.exists(summary_data2_path):
-        summary_data2 = load_json(summary_data2_path)
-        logger.info(f"Loaded processed data from {summary_data2_path}")
-    else:
-        summarizer = SimpleSummarizer(
-            model=config["summarize"]["model"],
-        )
-        # プロンプトの作成
-        if not os.path.exists(summary_prompt2_path):
-            # データロード
-            raw_data = load_htmls_under_dir(config["data"]["input_dir"])
-            logger.info(f"Loaded {len(raw_data)} records from {config['data']['input_dir']}")
-            prompt_data2 = summarizer.batch_json_data(raw_data)[3500:]
-
-            # プロンプトデータ保存
-            os.makedirs(os.path.dirname(summary_prompt2_path), exist_ok=True)
-            save_list_json(prompt_data2, summary_prompt2_path)
-            logger.info(f"Saved processed data to {summary_prompt2_path}")
-        
-        summary_data2 = summarizer.summarize(summary_prompt2_path)
-        logger.info(f"Loaded processed data from {summary_prompt2_path}")
-
-        # プロンプトデータ保存
-        os.makedirs(os.path.dirname(summary_data2_path), exist_ok=True)
-        save_json(summary_data2, summary_data2_path)
-        logger.info(f"Saved processed data to {summary_data2_path}")
-
-    summary_data = summary_data1 + summary_data2
-    
     return index, processed_data, summary_data
 
 

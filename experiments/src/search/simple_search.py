@@ -60,16 +60,15 @@ class SimpleSearcher(BaseSearcher):
         query_np = np.array(query_vector).astype("float32").reshape(1, -1)
 
         # 1科目に対するチャンク数の最大値を取得
-        lecture_nos = [value['lecture_no'] for value in self.id_to_metadata.values()]
+        lecture_nos = [value["lecture_no"] for value in self.id_to_metadata.values()]
         max_freq = 0
         for lecture_no in set(lecture_nos):
             freq = lecture_nos.count(lecture_no)
             if freq > max_freq:
                 max_freq = freq
 
-
         # 類似度検索
-        distances, indices = temp_index.search(query_np, top_k*max_freq)
+        distances, indices = temp_index.search(query_np, top_k * max_freq)
 
         # 検索結果の整形
         results = []

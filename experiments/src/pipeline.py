@@ -7,11 +7,10 @@ import faiss
 import numpy as np
 from loguru import logger
 from src.embedding import BaseEmbedder, E5Embedder, GeminiEmbedder
-from src.preprocessing import SimplePreprocessor,SimpleSelectedPreprocessor
-from src.reranking import BaseReranker, GeminiReranker, BgeReranker
+from src.preprocessing import BasePreprocessor, SelectedPreprocessor, SimplePreprocessor
+from src.reranking import BaseReranker, BgeReranker, GeminiReranker
 from src.search import SimpleSearcher
-from src.summarize import SimpleSummarizer
-from src.utils import load_htmls_under_dir, load_json, save_json, save_list_json
+from src.utils import load_htmls_under_dir, load_json, save_json
 
 
 def build_faiss_index(embeddings: np.ndarray) -> faiss.Index:
@@ -55,9 +54,9 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict], List[str]]
     index_dir = config["index"]["index_dir"]
     embedding_path = os.path.join(index_dir, config["index"]["embedding_name"])
     processed_data_path = os.path.join(index_dir, config["index"]["processed_data_name"])
-    summarize_dir = config["summarize"]["summarize_dir"]
-    summary_data_path = os.path.join(summarize_dir, config["summarize"]["summary_name"])
-    
+    summarize_dir = config["summary"]["summary_dir"]
+    summary_data_path = os.path.join(summarize_dir, config["summary"]["summary_name"])
+
     # すでに同名の前処理済みデータが存在する場合はそれをロード
     if os.path.exists(processed_data_path):
         processed_data = load_json(processed_data_path)
@@ -68,16 +67,17 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict], List[str]]
         logger.info(f"Loaded {len(raw_data)} records from {config['data']['input_dir']}")
 
         # 前処理
+        preprocessor: BasePreprocessor
         if config["preprocessing"]["method"] == "simple":
             preprocessor = SimplePreprocessor(
                 chunk_size=config["preprocessing"]["chunk_size"],
                 normalization=config["preprocessing"]["normalization"],
             )
-        if config["preprocessing"]["method"] == "simple_selected":
-            preprocessor = SimpleSelectedPreprocessor(
+        elif config["preprocessing"]["method"] == "simple_selected":
+            preprocessor = SelectedPreprocessor(
                 chunk_size=config["preprocessing"]["chunk_size"],
                 normalization=config["preprocessing"]["normalization"],
-            )        
+            )
         processed_data = preprocessor.run(raw_data)
         logger.info(f"Processed data into {len(processed_data)} chunks")
 
@@ -110,31 +110,12 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict], List[str]]
         faiss.write_index(index, embedding_path)
         logger.info(f"Saved FAISS index to {embedding_path}")
 
-    # すでに同名の要約したデータが存在する場合はそれをロード
+    # 要約したデータをロード
     if os.path.exists(summary_data_path):
         summary_data = load_json(summary_data_path)
         logger.info(f"Loaded summary data from {summary_data_path}")
     else:
-        summarizer = SimpleSummarizer(
-            model=config["summarize"]["model"],
-        )
-        raw_data = load_htmls_under_dir(config["data"]["input_dir"])
-        logger.info(f"Loaded {len(raw_data)} records from {config['data']['input_dir']}")
-        sammary_data = []
-        for i in range(0,len(raw_data),3000):
-            prompt_data_path = os.path.join(summarize_dir, f"summary_prompt{i//3000+1}.json")
-            if not os.path.exists(prompt_data_path):
-                # プロンプトデータ保存
-                prompt_data = summarizer.batch_json_data(raw_data[i:i+3000])
-                os.makedirs(os.path.dirname(prompt_data_path), exist_ok=True)
-                save_list_json(prompt_data, prompt_data_path)
-                logger.info(f"Saved prompt data to {prompt_data_path}")
-
-            # 要約データ保存
-            sammary_data.extend(summarizer.summarize(prompt_data_path))
-        os.makedirs(os.path.dirname(summary_data_path), exist_ok=True)
-        save_json(sammary_data, summary_data_path)
-        logger.info(f"Saved summary data to {summary_data_path}")
+        ValueError("Summary data does not exist.")
 
     return index, processed_data, summary_data
 
@@ -142,16 +123,17 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict], List[str]]
 def pipeline_search(config: Dict, index: faiss.Index, processed_data: list, summary_data: list) -> List[Dict]:
     # メタデータの準備
     id_to_metadata = {str(idx): entry["metadata"] for idx, entry in enumerate(processed_data)}
-    if config["summarize"]["summary_output"]:
-        idx = 0
-        lecture_no = "0"
-        for v in id_to_metadata.values():
-            v["summary"] = summary_data[idx]
-            lecture_no_ = v["lecture_no"]
-            if lecture_no != lecture_no_:
-                idx += 1
-                lecture_no = lecture_no_
-        
+
+    # 要約をmetadataに追加する
+    idx = 0
+    lecture_no = ""
+    for v in id_to_metadata.values():
+        v["summary"] = summary_data[idx]
+        lecture_no_ = v["lecture_no"]
+        if lecture_no != lecture_no_:
+            idx += 1
+            lecture_no = lecture_no_
+
     logger.info("Prepared id to metadata mapping")
 
     # 検索システムの初期化
@@ -214,10 +196,5 @@ def main(config: Dict) -> List[Dict]:
 
     # 検索
     reranked_results_list = pipeline_search(config, index, processed_data, summary_data)
-
-    for reranked_results in reranked_results_list:
-        for result in reranked_results["results"]:
-            if config["summarize"]["summary_output"]:
-                result['metadata'] = {k: v for k, v in result['metadata'].items() if k in ['lecture_name','summary']}
 
     return reranked_results_list

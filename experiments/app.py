@@ -73,6 +73,7 @@ def run_search(
     # config.yamlと同形式
     config: Dict[str, Any] = {
         "data": {"input_dir": "data/raw"},
+        "summary": {"summary_dir": "data/summary", "summary_name": "summary_data.json"},
         "index": {
             "index_dir": "data/index_selected",
             "embedding_name": "faiss_index.bin",
@@ -86,8 +87,6 @@ def run_search(
             "top_k": 10,
         },
         "reranking": {"method": "gemini", "model": "gemini-1.5-flash"},
-        "summarize": {"summary_output": True, "model": "gpt-4o-mini", "summarize_dir": "data/summary", "summary_name": "summary_data.json"},
-
         "queries": None,
     }
 

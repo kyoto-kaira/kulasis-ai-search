@@ -6,6 +6,10 @@ wandb:
 data:
   input_dir: "data/raw"
 
+summary: 
+  summary_dir: "data/summary"
+  summary_name: "summary_data.json"
+
 index:
   index_dir: "data/index_selected"
   embedding_name: "faiss_index.bin"
@@ -30,11 +34,5 @@ search:
 reranking:
   method: "gemini"
   model: "gemini-2.0-flash-exp"
-
-summarize:
-  summary_output: True
-  model: "gpt-4o-mini"
-  summarize_dir: "data/summary"
-  summary_name: "summary_data.json"
 
 queries: ["日本の法律の歴史について学びたい"]

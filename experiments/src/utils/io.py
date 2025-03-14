@@ -91,6 +91,7 @@ def save_json(data: Any, path: str) -> None:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
+
 def save_list_json(data: List, path: str) -> None:
     """
     ListデータをJSONファイルにデータを書き込む関数。
@@ -104,7 +105,8 @@ def save_list_json(data: List, path: str) -> None:
     """
     with open(path, "w", encoding="utf-8") as f:
         for d in data:
-            f.write(json.dumps(d) + '\n')
+            f.write(json.dumps(d) + "\n")
+
 
 def save_pickle(data: Any, path: str) -> None:
     """

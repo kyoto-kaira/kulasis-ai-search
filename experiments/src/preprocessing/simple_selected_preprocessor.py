@@ -9,9 +9,9 @@ from ..utils import SyllabusParser
 from .base import BasePreprocessor
 
 
-class SimpleSelectedPreprocessor(BasePreprocessor):
+class SelectedPreprocessor(BasePreprocessor):
     """
-    シンプルなテキスト前処理を行うクラス。
+    選別したテキスト前処理を行うクラス。
     """
 
     def __init__(self, chunk_size: int = 512, normalization: bool = True):
@@ -72,11 +72,11 @@ class SimpleSelectedPreprocessor(BasePreprocessor):
         chunks = []
         for i in range(0, len(tokens), self.chunk_size):
             if len(tokens) - i < self.chunk_size:
-                chunk = "".join(tokens[-self.chunk_size:])
+                chunk = "".join(tokens[-self.chunk_size :])
                 chunks.append(chunk)
             else:
                 chunk = "".join(tokens[i : i + self.chunk_size])
-                chunks.append(chunk)                
+                chunks.append(chunk)
         return chunks
 
     def run(self, data: List[Dict]) -> List[Dict]:
@@ -112,7 +112,7 @@ class SimpleSelectedPreprocessor(BasePreprocessor):
             parsed_content = self.parse_html(html_content)
             selected_list = [lecture_info["lecture_name"]]
             for k, v in parsed_content.items():
-                if k in ["授業の概要・目的","到達目標","授業計画と内容"]:
+                if k in ["授業の概要・目的", "到達目標", "授業計画と内容"]:
                     selected_list.append(f"{k}: {v}")
             text = "\n".join(selected_list)
 

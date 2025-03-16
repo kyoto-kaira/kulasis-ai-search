@@ -1,16 +1,12 @@
 import json
 import os
 import re
-import sys
 import time
 from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
 from loguru import logger
 from openai import OpenAI
-
-sys.path.append(os.getcwd())
-
 from src.constants import ID_TO_LECTURE
 from src.utils import SyllabusParser, load_htmls_under_dir, save_json, save_list_json
 
@@ -140,8 +136,8 @@ def summarize(file_name: str) -> List[str]:
             raise ValueError("Input file is too large or its format is wrong")
 
     result_file_id = batch_job.output_file_id
-    if result_file_id == None:
-        ValueError("result_file_id is None")
+    if result_file_id is None:
+        raise ValueError("result_file_id is None")
     else:
         result = client.files.content(result_file_id).content
 
@@ -161,7 +157,7 @@ model = "gpt-4o-mini"
 raw_data = load_htmls_under_dir("data/raw")
 logger.info(f"Loaded {len(raw_data)} records from data/raw")
 
-sammary_data = []
+summary_data = []
 for i in range(0, len(raw_data), 3000):
     prompt_data_path = os.path.join("data/summary", f"summary_prompt{i//3000+1}.json")
     if not os.path.exists(prompt_data_path):
@@ -172,7 +168,7 @@ for i in range(0, len(raw_data), 3000):
         logger.info(f"Saved prompt data to {prompt_data_path}")
 
     # 要約データ保存
-    sammary_data.extend(summarize(prompt_data_path))
+    summary_data.extend(summarize(prompt_data_path))
 os.makedirs(os.path.dirname(summary_data_path), exist_ok=True)
-save_json(sammary_data, summary_data_path)
+save_json(summary_data, summary_data_path)
 logger.info(f"Saved summary data to {summary_data_path}")

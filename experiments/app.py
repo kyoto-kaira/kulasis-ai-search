@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 import streamlit as st
+import torch
 from src.constants import (
     ACADEMIC_FIELDS,
     CLASS_TYPES,
@@ -12,6 +13,8 @@ from src.constants import (
     SEMESTERS,
 )
 from src.pipeline import main
+
+torch.classes.__path__ = []  # add this line to manually set it to empty.
 
 
 def run_search(
@@ -73,19 +76,20 @@ def run_search(
     # config.yamlと同形式
     config: Dict[str, Any] = {
         "data": {"input_dir": "data/raw"},
+        "summary": {"summary_dir": "data/summary", "summary_name": "summary_data.json"},
         "index": {
-            "index_dir": "data/index",
+            "index_dir": "data/index_selected",
             "embedding_name": "faiss_index.bin",
             "processed_data_name": "processed_data.json",
         },
-        "preprocessing": {"method": "simple", "chunk_size": 2048, "normalization": True},
-        "embedding": {"method": "gemini", "model": "models/text-embedding-004"},
+        "preprocessing": {"method": "simple_selected", "chunk_size": 2048, "normalization": True},
+        "embedding": {"method": "e5", "model": "intfloat/multilingual-e5-small", "batch_size": 32},
         "search": {
             "method": "simple",
             "metadata_filter": {},
             "top_k": 10,
         },
-        "reranking": {"method": "gemini", "model": "gemini-1.5-flash"},
+        "reranking": {"method": "bge", "model": "BAAI/bge-reranker-large"},
         "queries": None,
     }
 

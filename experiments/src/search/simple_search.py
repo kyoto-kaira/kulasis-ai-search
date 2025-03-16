@@ -59,22 +59,44 @@ class SimpleSearcher(BaseSearcher):
         # クエリベクトルの整形
         query_np = np.array(query_vector).astype("float32").reshape(1, -1)
 
+        # 1科目に対するチャンク数の最大値を取得
+        lecture_nos = [value["lecture_no"] for value in self.id_to_metadata.values()]
+        max_freq = 0
+        for lecture_no in set(lecture_nos):
+            freq = lecture_nos.count(lecture_no)
+            if freq > max_freq:
+                max_freq = freq
+
         # 類似度検索
-        distances, indices = temp_index.search(query_np, top_k)
+        distances, indices = temp_index.search(query_np, top_k * max_freq)
 
         # 検索結果の整形
         results = []
+        top_lecture_list = []
+        for idx in indices[0]:
+            if idx == -1:
+                continue
+            actual_id = filtered_ids[idx]
+            metadata = self.id_to_metadata.get(str(actual_id), {})
+            top_lecture_list.append(metadata["lecture_no"])
+        top_lecture_set = set(top_lecture_list)
+        top_lecture_count = 0
         for distance, idx in zip(distances[0], indices[0]):
             if idx == -1:
                 continue
             actual_id = filtered_ids[idx]
             metadata = self.id_to_metadata.get(str(actual_id), {})
-            results.append(
-                {
-                    "distance": float(distance),
-                    "metadata": metadata,
-                }
-            )
+            if metadata["lecture_no"] in top_lecture_set:
+                results.append(
+                    {
+                        "distance": float(distance),
+                        "metadata": metadata,
+                    }
+                )
+                top_lecture_set.remove(metadata["lecture_no"])
+                top_lecture_count += 1
+            if top_lecture_count >= top_k:
+                break
         return results
 
     def apply_metadata_filter(self, filters: Optional[Dict]) -> List[str]:

@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 import time
 from typing import Dict, List, Optional
 
@@ -8,11 +9,11 @@ from dotenv import load_dotenv
 from loguru import logger
 from openai import OpenAI
 
-import sys
 sys.path.append(os.getcwd())
 
 from src.constants import ID_TO_LECTURE
 from src.utils import SyllabusParser, load_htmls_under_dir, save_json, save_list_json
+
 
 def parse_html(html_content: str) -> Dict[str, Optional[str]]:
     """
@@ -32,6 +33,7 @@ def parse_html(html_content: str) -> Dict[str, Optional[str]]:
     data = parser.parse()
     return data
 
+
 def normalize_text(text: str) -> str:
     """
     テキストの正規化を行う。
@@ -50,7 +52,8 @@ def normalize_text(text: str) -> str:
     text = text.replace("\u3000", " ")
     return text
 
-def batch_json_data(model:str, data: List[Dict]) -> List[Dict]:
+
+def batch_json_data(model: str, data: List[Dict]) -> List[Dict]:
     """
     バッチ処理のためのプロンプトの作成を行う。
 
@@ -98,6 +101,7 @@ def batch_json_data(model:str, data: List[Dict]) -> List[Dict]:
 
         tasks.append(task)
     return tasks
+
 
 def summarize(file_name: str) -> List[str]:
     """
@@ -149,6 +153,7 @@ def summarize(file_name: str) -> List[str]:
         json_object = json.loads(line)
         results.append(json_object["response"]["body"]["choices"][0]["message"]["content"])
     return results
+
 
 summary_data_path = os.path.join("data/summary", "summary_data.json")
 model = "gpt-4o-mini"

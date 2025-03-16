@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 import streamlit as st
+import torch
 from src.constants import (
     ACADEMIC_FIELDS,
     CLASS_TYPES,
@@ -12,6 +13,8 @@ from src.constants import (
     SEMESTERS,
 )
 from src.pipeline import main
+
+torch.classes.__path__ = []  # add this line to manually set it to empty.
 
 
 def run_search(
@@ -86,7 +89,7 @@ def run_search(
             "metadata_filter": {},
             "top_k": 10,
         },
-        "reranking": {"method": "gemini", "model": "gemini-1.5-flash"},
+        "reranking": {"method": "bge", "model": "BAAI/bge-reranker-large"},
         "queries": None,
     }
 

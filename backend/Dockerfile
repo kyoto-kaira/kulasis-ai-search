@@ -1,13 +1,9 @@
-# VARIABLES
-ARG PYTHON_VERSION=3.13-slim
-ARG APP_DIR=app/backend
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
-FROM python:3.13-slim
-
-WORKDIR /${APP_DIR}
+WORKDIR /app/backend
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --no-cache-dir -r requirements.txt --system
 
 COPY . .

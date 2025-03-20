@@ -30,6 +30,7 @@ export interface SearchParams {
   language?: string;
   level?: string;
   academic_field?: string;
+  query?: string;
 }
 
 export interface TimeSlot {

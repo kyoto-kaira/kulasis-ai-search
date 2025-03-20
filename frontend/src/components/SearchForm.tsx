@@ -30,6 +30,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
   const [level, setLevel] = useState('');
   const [academicField, setAcademicField] = useState('');
   const [availableMajors, setAvailableMajors] = useState<string[]>([]);
+  const [query, setQuery] = useState('');
 
   const days = ['月', '火', '水', '木', '金'];
   const periods = ['1', '2', '3', '4', '5'];
@@ -73,6 +74,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
       language,
       level,
       academic_field: academicField,
+      query,
     };
     onSearch(searchParams);
   };
@@ -89,6 +91,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
     setLanguage('');
     setLevel('');
     setAcademicField('');
+    setQuery('');
     onReset();
   };
 
@@ -96,6 +99,22 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
     <div className="space-y-6">
       <h2 className="text-xl font-semibold mb-6">授業を検索</h2>
       <p className="text-gray-600 mb-6">いずれか一つの項目からでも検索が可能です。</p>
+      
+      {/* 自由検索フィールド */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">自由検索</h3>
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-grow">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="キーワードを入力（例：プログラミング、経済学、実験）"
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+            />
+          </div>
+        </div>
+      </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* 基本情報の検索ブロック */}

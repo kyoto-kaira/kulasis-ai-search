@@ -13,7 +13,7 @@ from src.search import SimpleSearcher
 from src.utils import load_htmls_under_dir, load_json, save_json
 
 
-class Piplines:
+class Pipelines:
     def __init__(self, config: Dict) -> None:
         self.config = config
 

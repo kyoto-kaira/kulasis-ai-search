@@ -86,7 +86,7 @@ def search_courses(params: SearchParams) -> Response:
                 "top_k": 10,
                 "metadata_filter": {},
             },
-            "reranking": {"method": "bge", "model": "BAAI/bge-reranker-large"},
+            "reranking": {"method": "bge", "model": "BAAI/bge-reranker-v2-m3"},
             "queries": [params.query if params.query else ""],
         }
 

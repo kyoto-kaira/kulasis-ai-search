@@ -14,6 +14,7 @@ function App() {
     setIsLoading(true);
     try {
       const data = await searchCourses(searchParams);
+      console.log(data);
       setCourses(data);
       setIsSearchResults(true);
     } finally {

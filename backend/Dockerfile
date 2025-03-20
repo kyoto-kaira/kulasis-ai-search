@@ -1,8 +1,8 @@
 # VARIABLES
-ARG PYTHON_VERSION=3.11-slim
+ARG PYTHON_VERSION=3.13-slim
 ARG APP_DIR=app/backend
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /${APP_DIR}
 

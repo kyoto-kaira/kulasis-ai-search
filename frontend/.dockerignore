@@ -1,0 +1,26 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Version control
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Misc
+README.md
+*.pyc
+__pycache__
+.DS_Store

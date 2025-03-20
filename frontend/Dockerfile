@@ -1,0 +1,15 @@
+# VARIABLES
+ARG NODE_VERSION=23-slim
+ARG APP_DIR=app
+
+FROM node:${NODE_VERSION}
+
+WORKDIR /${APP_DIR}
+
+COPY package*.json ./
+
+RUN npm ci
+
+COPY . .
+
+EXPOSE 5173

@@ -1,8 +1,13 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+import json
+import traceback
 from typing import List, Optional
-import uvicorn
+
+from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import uvicorn
+
+from src.pipeline import Pipelines
 
 app = FastAPI()
 
@@ -14,6 +19,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 class Course(BaseModel):
     id: str
@@ -28,48 +34,6 @@ class Course(BaseModel):
     content_rating: float
     reviews: int
 
-# Sample data
-courses = [
-    {
-        "id": "1",
-        "code": "金",
-        "title": "金融リテラシー（寄附講座）",
-        "department": "経済学部",
-        "instructor": "藤田康範",
-        "semester": "金曜4限",
-        "enrollment_count": 726,
-        "rating": 4,
-        "difficulty_rating": 4,
-        "content_rating": 4,
-        "reviews": 10
-    },
-    {
-        "id": "2",
-        "code": "経",
-        "title": "経済政策のミクロ分析a",
-        "department": "経済学部",
-        "instructor": "藤田浩範",
-        "semester": "月曜1限",
-        "enrollment_count": 595,
-        "rating": 4,
-        "difficulty_rating": 4,
-        "content_rating": 4,
-        "reviews": 5
-    },
-    {
-        "id": "3",
-        "code": "代",
-        "title": "代謝の基礎生物学",
-        "department": "環境情報学部",
-        "instructor": "渡辺光博",
-        "semester": "水曜4限",
-        "enrollment_count": 585,
-        "rating": 3,
-        "difficulty_rating": 3,
-        "content_rating": 3,
-        "reviews": 0
-    }
-]
 
 class SearchParams(BaseModel):
     year: Optional[str] = None
@@ -80,59 +44,75 @@ class SearchParams(BaseModel):
     periods: Optional[List[str]] = None
     course_name: Optional[str] = None
     instructor: Optional[str] = None
-    campus: Optional[str] = None
+    query: Optional[str] = None
 
-@app.get("/api/courses/", response_model=List[Course])
-async def get_courses():
-    return courses
 
-@app.post("/api/courses/search/", response_model=List[Course])
-async def search_courses(params: SearchParams):
-    filtered_courses = courses.copy()
-    
-    if params.course_name:
-        filtered_courses = [
-            course for course in filtered_courses
-            if params.course_name.lower() in course["title"].lower()
-        ]
-    
-    if params.instructor:
-        filtered_courses = [
-            course for course in filtered_courses
-            if params.instructor.lower() in course["instructor"].lower()
-        ]
-    
-    if params.department:
-        filtered_courses = [
-            course for course in filtered_courses
-            if course["department"] == params.department
-        ]
-    
-    if params.days and params.periods:
-        filtered_courses = [
-            course for course in filtered_courses
-            if any(f"{day}曜{period}限" in course["semester"]
-                  for day in params.days
-                  for period in params.periods)
-        ]
-    elif params.days:
-        filtered_courses = [
-            course for course in filtered_courses
-            if any(f"{day}曜" in course["semester"] for day in params.days)
-        ]
-    elif params.periods:
-        filtered_courses = [
-            course for course in filtered_courses
-            if any(f"{period}限" in course["semester"] for period in params.periods)
-        ]
-    
-    return filtered_courses
+@app.get("/ping")
+def ping() -> Response:
+    response = Response(
+        content="ping",
+        status_code=status.HTTP_200_OK,
+        media_type="text/plain",
+    )
+    return response
 
-@app.get("/api/courses/popular/", response_model=List[Course])
-async def get_popular_courses():
-    # Sort by enrollment count and return top 3
-    sorted_courses = sorted(courses, key=lambda x: x["enrollment_count"], reverse=True)
-    return sorted_courses[:3]
+
+@app.post("/invocations")
+def search_courses(params: SearchParams) -> Response:
+    try:
+        config = {
+            "data": {"input_dir": "data/raw"},
+            "summary": {
+                "summary_dir": "data/summary",
+                "summary_name": "summary_data.json",
+            },
+            "index": {
+                "index_dir": "data/index_selected",
+                "embedding_name": "faiss_index.bin",
+                "processed_data_name": "processed_data.json",
+            },
+            "preprocessing": {
+                "method": "simple_selected",
+                "chunk_size": 512,
+                "normalization": True,
+            },
+            "embedding": {
+                "method": "e5",
+                "model": "intfloat/multilingual-e5-small",
+                "batch_size": 32,
+            },
+            "search": {
+                "method": "simple",
+                "top_k": 10,
+            },
+            "reranking": {"method": "bge", "model": "BAAI/bge-reranker-large"},
+            "queries": [params.query if params.query else ""],
+        }
+
+        if params.department:
+            config["search"]["metadata_filter"] = {"department": params.department}
+
+        pipelines = Pipelines(config)
+        cources = pipelines()
+        response = Response(
+            content=json.dumps(cources, default=str, ensure_ascii=False, indent=4),
+            status_code=status.HTTP_200_OK,
+            media_type="application/json",
+        )
+
+    except Exception:
+        exc = traceback.format_exc()
+        contents = {"error": exc}
+        print(exc)
+        contents_json = json.dumps(contents, default=str, ensure_ascii=False, indent=4)
+        response = Response(
+            content=contents_json,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            media_type="application/json",
+        )
+
+    return response
+
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)

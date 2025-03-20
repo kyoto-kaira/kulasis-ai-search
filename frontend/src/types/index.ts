@@ -1,15 +1,20 @@
 export interface Course {
   id: string;
-  code: string;
-  title: string;
-  department: string;
+  name: string;
   instructor: string;
+  department: string;
+  schedule: {
+    day: string;
+    period: string;
+  }[];
   semester: string;
-  enrollment_count: number;
-  rating: number;
-  difficulty_rating: number;
-  content_rating: number;
-  reviews: number;
+  class_type?: string;
+  language?: string;
+  level?: string;
+  academic_field?: string;
+  description?: string;
+  credits?: number;
+  url?: string;
 }
 
 export interface SearchParams {
@@ -21,7 +26,10 @@ export interface SearchParams {
   periods: string[];
   course_name: string;
   instructor: string;
-  campus: string;
+  class_type?: string;
+  language?: string;
+  level?: string;
+  academic_field?: string;
 }
 
 export interface TimeSlot {

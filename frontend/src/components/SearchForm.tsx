@@ -1,4 +1,14 @@
 import React, { useState } from 'react';
+import {
+  ACADEMIC_FIELDS,
+  CLASS_TYPES,
+  DEPARTMENTS,
+  EMPTY_OPTION,
+  LANGUAGES,
+  LEVELS,
+  MAJORS_BY_DEPARTMENT,
+  SEMESTERS
+} from '../constants';
 import { SearchParams, TimeSlot } from '../types';
 
 interface SearchFormProps {
@@ -15,10 +25,24 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<TimeSlot[]>([]);
   const [courseName, setCourseName] = useState('');
   const [instructor, setInstructor] = useState('');
-  const [campus, setCampus] = useState('');
+  const [classType, setClassType] = useState('');
+  const [language, setLanguage] = useState('');
+  const [level, setLevel] = useState('');
+  const [academicField, setAcademicField] = useState('');
+  const [availableMajors, setAvailableMajors] = useState<string[]>([]);
 
   const days = ['月', '火', '水', '木', '金'];
   const periods = ['1', '2', '3', '4', '5'];
+
+  // 学部が変更されたときに学科リストを更新
+  React.useEffect(() => {
+    if (department && MAJORS_BY_DEPARTMENT[department]) {
+      setAvailableMajors(MAJORS_BY_DEPARTMENT[department]);
+    } else {
+      setAvailableMajors([]);
+    }
+    setMajor(''); // 学部が変更されたら学科をリセット
+  }, [department]);
 
   const isTimeSlotSelected = (day: string, period: string) => {
     return selectedTimeSlots.some(slot => slot.day === day && slot.period === period);
@@ -45,7 +69,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
       periods: [...new Set(selectedTimeSlots.map(slot => slot.period))],
       course_name: courseName,
       instructor,
-      campus,
+      class_type: classType,
+      language,
+      level,
+      academic_field: academicField,
     };
     onSearch(searchParams);
   };
@@ -58,7 +85,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
     setSelectedTimeSlots([]);
     setCourseName('');
     setInstructor('');
-    setCampus('');
+    setClassType('');
+    setLanguage('');
+    setLevel('');
+    setAcademicField('');
     onReset();
   };
 
@@ -112,9 +142,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
                 onChange={(e) => setDepartment(e.target.value)}
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
               >
-                <option value="">学部を選択</option>
-                <option value="経済学部">経済学部</option>
-                <option value="環境情報学部">環境情報学部</option>
+                <option value="">{EMPTY_OPTION}</option>
+                {DEPARTMENTS.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
               </select>
             </div>
 
@@ -124,19 +155,12 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
                 value={major}
                 onChange={(e) => setMajor(e.target.value)}
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
+                disabled={availableMajors.length === 0}
               >
-                <option value="">学科を選択</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">キャンパス</label>
-              <select
-                value={campus}
-                onChange={(e) => setCampus(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
-              >
-                <option value="">キャンパスを選択</option>
+                <option value="">{EMPTY_OPTION}</option>
+                {availableMajors.map(maj => (
+                  <option key={maj} value={maj}>{maj}</option>
+                ))}
               </select>
             </div>
 
@@ -147,7 +171,66 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, onReset, isLoading })
                 onChange={(e) => setSemester(e.target.value)}
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
               >
-                <option value="">学期を選択</option>
+                <option value="">{EMPTY_OPTION}</option>
+                {SEMESTERS.map(sem => (
+                  <option key={sem} value={sem}>{sem}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">授業形態</label>
+              <select
+                value={classType}
+                onChange={(e) => setClassType(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+              >
+                <option value="">{EMPTY_OPTION}</option>
+                {CLASS_TYPES.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">使用言語</label>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+              >
+                <option value="">{EMPTY_OPTION}</option>
+                {LANGUAGES.map(lang => (
+                  <option key={lang} value={lang}>{lang}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">レベル</label>
+              <select
+                value={level}
+                onChange={(e) => setLevel(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+              >
+                <option value="">{EMPTY_OPTION}</option>
+                {LEVELS.map(lvl => (
+                  <option key={lvl} value={lvl}>{lvl}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">学問分野</label>
+              <select
+                value={academicField}
+                onChange={(e) => setAcademicField(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+              >
+                <option value="">{EMPTY_OPTION}</option>
+                {ACADEMIC_FIELDS.map(field => (
+                  <option key={field} value={field}>{field}</option>
+                ))}
               </select>
             </div>
           </div>

@@ -11,7 +11,7 @@ const CourseList: React.FC<CourseListProps> = ({ courses, isSearchResults }) => 
   return (
     <>
       <h2 className="text-xl font-semibold my-8">
-        {isSearchResults ? '検索結果' : '人気の授業'}
+        検索結果
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {courses.map((course) => (

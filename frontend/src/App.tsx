@@ -1,24 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import CourseList from './components/CourseList';
 import Header from './components/Header';
 import SearchForm from './components/SearchForm';
 import { Course, SearchParams } from './types';
-import { fetchPopularCourses, searchCourses } from './utils/api';
+import { searchCourses } from './utils/api';
 
 function App() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearchResults, setIsSearchResults] = useState(false);
-
-  useEffect(() => {
-    loadPopularCourses();
-  }, []);
-
-  const loadPopularCourses = async () => {
-    const data = await fetchPopularCourses();
-    setCourses(data);
-    setIsSearchResults(false);
-  };
 
   const handleSearch = async (searchParams: SearchParams) => {
     setIsLoading(true);
@@ -32,7 +22,8 @@ function App() {
   };
 
   const handleReset = () => {
-    loadPopularCourses();
+    setCourses([]);
+    setIsSearchResults(false);
   };
 
   return (

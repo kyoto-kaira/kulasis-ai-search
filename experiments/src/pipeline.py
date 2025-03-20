@@ -7,7 +7,7 @@ import faiss
 import numpy as np
 from loguru import logger
 from src.embedding import BaseEmbedder, E5Embedder, GeminiEmbedder
-from src.preprocessing import SimplePreprocessor
+from src.preprocessing import BasePreprocessor, SelectedPreprocessor, SimplePreprocessor
 from src.reranking import BaseReranker, BgeReranker, GeminiReranker
 from src.search import SimpleSearcher
 from src.utils import load_htmls_under_dir, load_json, save_json
@@ -33,7 +33,7 @@ def build_faiss_index(embeddings: np.ndarray) -> faiss.Index:
     return index
 
 
-def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict]]:
+def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict], List[str]]:
     """
     インデックス構築のパイプラインを実行する関数。
 
@@ -48,10 +48,14 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict]]:
         構築されたFAISSインデックス
     List[Dict]
         前処理済みデータ
+    List[str]
+        要約したデータ
     """
     index_dir = config["index"]["index_dir"]
     embedding_path = os.path.join(index_dir, config["index"]["embedding_name"])
     processed_data_path = os.path.join(index_dir, config["index"]["processed_data_name"])
+    summarize_dir = config["summary"]["summary_dir"]
+    summary_data_path = os.path.join(summarize_dir, config["summary"]["summary_name"])
 
     # すでに同名の前処理済みデータが存在する場合はそれをロード
     if os.path.exists(processed_data_path):
@@ -63,8 +67,14 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict]]:
         logger.info(f"Loaded {len(raw_data)} records from {config['data']['input_dir']}")
 
         # 前処理
+        preprocessor: BasePreprocessor
         if config["preprocessing"]["method"] == "simple":
             preprocessor = SimplePreprocessor(
+                chunk_size=config["preprocessing"]["chunk_size"],
+                normalization=config["preprocessing"]["normalization"],
+            )
+        elif config["preprocessing"]["method"] == "simple_selected":
+            preprocessor = SelectedPreprocessor(
                 chunk_size=config["preprocessing"]["chunk_size"],
                 normalization=config["preprocessing"]["normalization"],
             )
@@ -100,12 +110,30 @@ def pipeline_indexing(config: Dict) -> Tuple[faiss.Index, List[Dict]]:
         faiss.write_index(index, embedding_path)
         logger.info(f"Saved FAISS index to {embedding_path}")
 
-    return index, processed_data
+    # 要約したデータをロード
+    if os.path.exists(summary_data_path):
+        summary_data = load_json(summary_data_path)
+        logger.info(f"Loaded summary data from {summary_data_path}")
+    else:
+        ValueError("Summary data does not exist.")
+
+    return index, processed_data, summary_data
 
 
-def pipeline_search(config: Dict, index: faiss.Index, processed_data: list) -> List[Dict]:
+def pipeline_search(config: Dict, index: faiss.Index, processed_data: list, summary_data: list) -> List[Dict]:
     # メタデータの準備
     id_to_metadata = {str(idx): entry["metadata"] for idx, entry in enumerate(processed_data)}
+
+    # 要約をmetadataに追加する
+    idx = 0
+    lecture_no = ""
+    for v in id_to_metadata.values():
+        v["summary"] = summary_data[idx]
+        lecture_no_ = v["lecture_no"]
+        if lecture_no != lecture_no_:
+            idx += 1
+            lecture_no = lecture_no_
+
     logger.info("Prepared id to metadata mapping")
 
     # 検索システムの初期化
@@ -164,9 +192,9 @@ def pipeline_search(config: Dict, index: faiss.Index, processed_data: list) -> L
 
 def main(config: Dict) -> List[Dict]:
     # インデックス構築
-    index, processed_data = pipeline_indexing(config)
+    index, processed_data, summary_data = pipeline_indexing(config)
 
     # 検索
-    reranked_results_list = pipeline_search(config, index, processed_data)
+    reranked_results_list = pipeline_search(config, index, processed_data, summary_data)
 
     return reranked_results_list
